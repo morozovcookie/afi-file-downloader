@@ -1,0 +1,13 @@
+version: '3'
+networks:
+  nginx:
+    external: false
+services:
+  nginx:
+    image: nginx@sha256:a411d06ab4f5347ac9652357ac35600555aeff0b910326cc7adc36d471e0b36f
+    expose:
+    - 80
+    ports:
+    - 8080:80
+    networks:
+    - nginx
