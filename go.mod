@@ -1,3 +1,3 @@
-module github.com/morozovcookie/afi-file-downloader
+module github.com/morozovcookie/afifiledownloader
 
 go 1.15
