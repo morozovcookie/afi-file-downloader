@@ -14,6 +14,7 @@ func NewDownloader() *Downloader {
 	return &Downloader{}
 }
 
+// nolint: bodyclose
 func (d *Downloader) Download(
 	url string,
 	timeout time.Duration,

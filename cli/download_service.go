@@ -16,6 +16,8 @@ func (d Duration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(time.Duration(d).String())
 }
 
+var ErrInvalidDuration = errors.New("invalid duration")
+
 func (d *Duration) UnmarshalJSON(b []byte) error {
 	var v interface{}
 	if err := json.Unmarshal(b, &v); err != nil {
@@ -24,6 +26,7 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 
 	if val, ok := v.(float64); ok {
 		*d = Duration(time.Duration(val))
+
 		return nil
 	}
 
@@ -38,7 +41,7 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 
-	return errors.New("invalid duration")
+	return ErrInvalidDuration
 }
 
 type Input struct {
@@ -51,6 +54,7 @@ type Input struct {
 
 // Validate input HTTP URL
 // Validate output TCP URL
+
 func (i Input) Validate() (err error) {
 	return nil
 }

@@ -12,17 +12,6 @@ import (
 	"github.com/morozovcookie/afifiledownloader/tcp"
 )
 
-const (
-	ErrDecodeInput = iota + 1
-	ErrEncodeOutput
-	ErrCreateRequest
-	ErrDoRequest
-	ErrBodyClose
-	ErrDialConn
-	ErrCloseConn
-	ErrWriteOutput
-)
-
 type Output struct {
 	Success       bool     `json:"success"`
 	HTTPCode      int      `json:"http-code,omitempty"`
@@ -40,6 +29,7 @@ type Output struct {
 // 7. Project docs
 // 8. CI / code quality / github releases
 // 9. SSL
+
 func main() {
 	var (
 		out = &Output{Success: true}
@@ -61,6 +51,7 @@ func main() {
 
 	if err = svc.Download(os.Stdin); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "download error: %v \n", err)
+
 		return
 	}
 
