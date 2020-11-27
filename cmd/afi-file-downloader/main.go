@@ -1,171 +1,77 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"net"
-	"net/http"
 	"os"
 	"time"
+
+	afd "github.com/morozovcookie/afifiledownloader"
+	"github.com/morozovcookie/afifiledownloader/cli"
+	"github.com/morozovcookie/afifiledownloader/http"
+	"github.com/morozovcookie/afifiledownloader/tcp"
 )
 
-const (
-	ErrDecodeInput = iota + 1
-	ErrEncodeOutput
-	ErrCreateRequest
-	ErrDoRequest
-	ErrBodyClose
-	ErrDialConn
-	ErrCloseConn
-	ErrWriteOutput
-)
-
-type Duration time.Duration
-
-func (d Duration) MarshalJSON() ([]byte, error) {
-	return json.Marshal(time.Duration(d).String())
-}
-
-func (d *Duration) UnmarshalJSON(b []byte) error {
-	var v interface{}
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-
-	if val, ok := v.(float64); ok {
-		*d = Duration(time.Duration(val))
-		return nil
-	}
-
-	if val, ok := v.(string); ok {
-		t, err := time.ParseDuration(val)
-		if err != nil {
-			return err
-		}
-
-		*d = Duration(t)
-
-		return nil
-	}
-
-	return errors.New("invalid duration")
-}
-
-type UtilityInput struct {
-	IgnoreSSLCertificates bool     `json:"ignore-ssl-certificates"`
-	FollowRedirects       bool     `json:"follow-redirects"`
-	URL                   string   `json:"url"`
-	Output                string   `json:"output"`
-	Timeout               Duration `json:"timeout"`
-}
-
-type UtilityOutput struct {
+type Output struct {
 	Success       bool     `json:"success"`
-	HTTPCode      int      `json:"http-code"`
-	ContentLength int64    `json:"content-length"`
-	ContentType   string   `json:"content-type"`
-	ErrorMessage  string   `json:"error-message"`
-	Redirects     []string `json:"redirects"`
+	HTTPCode      int      `json:"http-code,omitempty"`
+	ContentLength int64    `json:"content-length,omitempty"`
+	ContentType   string   `json:"content-type,omitempty"`
+	ErrorMessage  string   `json:"error-message,omitempty"`
+	Redirects     []string `json:"redirects,omitempty"`
 }
 
-// 1. Receive input from stdin +
-// 2. Unmarshal input to struct +
-// 3. Create request +
-// 4. Send request +
-// 5. Receive response +
-// 6. Forward response body to the output in background +
-// 7. Create program result +
-// 8. Marshal program result +
-// 9. Print program result into stdout +
-//
 // Additional:
-// 1. Control redirects
-// 2. Tests
-// 3. Validate input HTTP URL
-// 4. Validate output TCP URL
+// 1. Dockerfile (or werf.yaml)
+// 2. Control redirects
+// 3. SSL
+// 4. Code docs
+// 5. Project docs
+
 func main() {
 	var (
-		in  = &UtilityInput{}
-		out = &UtilityOutput{}
+		out = &Output{Success: true}
+
+		err error
 	)
 
-	if err := json.NewDecoder(os.Stdin).Decode(in); err != nil {
-		out.ErrorMessage = "decode input error: " + err.Error()
-		writeOutput(os.Stdout, out)
-		os.Exit(ErrDecodeInput)
-	}
-
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(in.Timeout)))
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, in.URL, nil)
-	if err != nil {
-		out.ErrorMessage = "create request error: " + err.Error()
-		writeOutput(os.Stdout, out)
-		os.Exit(ErrCreateRequest)
-	}
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		out.ErrorMessage = "do request error: " + err.Error()
-		writeOutput(os.Stdout, out)
-		os.Exit(ErrDoRequest)
-	}
-
-	defer func(cl io.Closer) {
-		if closeErr := res.Body.Close(); closeErr != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "close body error: %v \n", err)
-			os.Exit(ErrBodyClose)
-		}
-	}(res.Body)
-
-	quit := make(chan struct{}, 1)
-
-	go func(r io.Reader, url string, ch chan<- struct{}) {
-		defer func(ch chan<- struct{}) {
-			ch <- struct{}{}
-			close(ch)
-		}(ch)
-
-		if url == "" {
+	defer func(err *error) {
+		if *err == nil {
 			return
 		}
 
-		conn, err := net.Dial("tcp", url)
-		if err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "dial conn error: %v \n", err)
-			os.Exit(ErrDialConn)
+		if encodeErr := json.NewEncoder(os.Stdout).Encode(&Output{ErrorMessage: (*err).Error()}); encodeErr != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "encode output error: %v \n", encodeErr)
+		}
+	}(&err)
+
+	var svc *cli.DownloadService
+	{
+		downloader := createDownloadFunc(http.NewDownloader(), out)
+		creator := func(address string) (s afd.Streamer, err error) {
+			return tcp.NewStreamer(address)
 		}
 
-		defer func(cl io.Closer) {
-			if closeErr := cl.Close(); closeErr != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "close tcp conn error: %v \n", err)
-				os.Exit(ErrCloseConn)
-			}
-		}(conn)
+		svc = cli.NewDownloadService(downloader, creator)
+	}
 
-		if _, err = io.Copy(conn, r); err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "write output data error: %v \n", err)
-			os.Exit(ErrWriteOutput)
-		}
-	}(res.Body, in.Output, quit)
+	if err = svc.Download(os.Stdin); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "download error: %v \n", err)
 
-	out.Success = true
-	out.HTTPCode = res.StatusCode
-	out.ContentLength = res.ContentLength
-	out.ContentType = res.Header.Get("Content-Type")
+		return
+	}
 
-	writeOutput(os.Stdout, out)
-
-	<-quit
+	if err = json.NewEncoder(os.Stdout).Encode(out); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "encode output error: %v \n", err)
+	}
 }
 
-func writeOutput(w io.Writer, out *UtilityOutput) {
-	if err := json.NewEncoder(w).Encode(out); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "encode output error: %v \n", err)
-		os.Exit(ErrEncodeOutput)
+func createDownloadFunc(d *http.Downloader, out *Output) afd.DownloadFunc {
+	return func(url string, timeout time.Duration, c afd.DownloadCallback) (err error) {
+		if out.HTTPCode, out.ContentLength, out.ContentType, err = d.Download(url, timeout, c); err != nil {
+			return err
+		}
+
+		return nil
 	}
 }
