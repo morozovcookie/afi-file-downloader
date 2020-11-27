@@ -34,7 +34,7 @@ func TestDownloadService_Download(t *testing.T) {
 
 		df afd.DownloadFunc
 
-		sc                *MockStreamerCreator
+		sc                StreamerCreator
 		creatorInput      []interface{}
 		creatorOutputFunc func() []interface{}
 
@@ -48,11 +48,7 @@ func TestDownloadService_Download(t *testing.T) {
 
 			df: defaultCallback,
 
-			sc: new(MockStreamerCreator),
-			creatorInput: []interface{}{
-				"127.0.0.1:5000",
-			},
-			creatorOutputFunc: func() []interface{} {
+			sc: func(_ string) (afd.Streamer, error) {
 				s := new(afd.MockStreamer)
 				s.
 					On("Write", []interface{}{[]byte(`{}`)}...).
@@ -61,10 +57,7 @@ func TestDownloadService_Download(t *testing.T) {
 					On("Close").
 					Return([]interface{}{(error)(nil)}...)
 
-				return []interface{}{
-					s,
-					(error)(nil),
-				}
+				return s, nil
 			},
 
 			in: bytes.NewBufferString(`{"url":"http://127.0.0.1:8080/index.html","timeout":"1s","output":"127.0.0.1:5000"}`),
@@ -75,10 +68,8 @@ func TestDownloadService_Download(t *testing.T) {
 
 			df: defaultCallback,
 
-			sc:           new(MockStreamerCreator),
-			creatorInput: []interface{}{},
-			creatorOutputFunc: func() []interface{} {
-				return []interface{}{}
+			sc: func(_ string) (s afd.Streamer, err error) {
+				return nil, nil
 			},
 
 			in: bytes.NewBuffer([]byte(`{"url":"http://127.0.0.1:8080/index.html","timeout":"1s"}`)),
@@ -91,10 +82,8 @@ func TestDownloadService_Download(t *testing.T) {
 				return nil
 			},
 
-			sc:           new(MockStreamerCreator),
-			creatorInput: []interface{}{},
-			creatorOutputFunc: func() []interface{} {
-				return []interface{}{}
+			sc: func(_ string) (s afd.Streamer, err error) {
+				return nil, nil
 			},
 
 			in: bytes.NewBuffer([]byte(`{"timeout":null}`)),
@@ -107,10 +96,8 @@ func TestDownloadService_Download(t *testing.T) {
 
 			df: defaultCallback,
 
-			sc:           new(MockStreamerCreator),
-			creatorInput: []interface{}{},
-			creatorOutputFunc: func() []interface{} {
-				return []interface{}{}
+			sc: func(_ string) (s afd.Streamer, err error) {
+				return nil, nil
 			},
 
 			in: bytes.NewBufferString(`{"timeout":"1s","output":"127.0.0.1:5000"}`),
@@ -125,10 +112,8 @@ func TestDownloadService_Download(t *testing.T) {
 				return errors.New("download error")
 			},
 
-			sc:           new(MockStreamerCreator),
-			creatorInput: []interface{}{},
-			creatorOutputFunc: func() []interface{} {
-				return []interface{}{}
+			sc: func(_ string) (s afd.Streamer, err error) {
+				return nil, nil
 			},
 
 			in: bytes.NewBufferString(`{"url":"http://127.0.0.1:8080/index.html","timeout":"1s"}`),
@@ -141,15 +126,8 @@ func TestDownloadService_Download(t *testing.T) {
 
 			df: defaultCallback,
 
-			sc: new(MockStreamerCreator),
-			creatorInput: []interface{}{
-				"127.0.0.1:5000",
-			},
-			creatorOutputFunc: func() []interface{} {
-				return []interface{}{
-					(*afd.MockStreamer)(nil),
-					errors.New("dial network error"),
-				}
+			sc: func(_ string) (s afd.Streamer, err error) {
+				return nil, errors.New("dial network error")
 			},
 
 			in: bytes.NewBufferString(`{"url":"http://127.0.0.1:8080/index.html","timeout":"1s","output":"127.0.0.1:5000"}`),
@@ -162,11 +140,7 @@ func TestDownloadService_Download(t *testing.T) {
 
 			df: defaultCallback,
 
-			sc: new(MockStreamerCreator),
-			creatorInput: []interface{}{
-				"127.0.0.1:5000",
-			},
-			creatorOutputFunc: func() []interface{} {
+			sc: func(_ string) (afd.Streamer, error) {
 				s := new(afd.MockStreamer)
 				s.
 					On("Write", []interface{}{[]byte(`{}`)}...).
@@ -175,10 +149,7 @@ func TestDownloadService_Download(t *testing.T) {
 					On("Close").
 					Return([]interface{}{(error)(nil)}...)
 
-				return []interface{}{
-					s,
-					(error)(nil),
-				}
+				return s, nil
 			},
 
 			in: bytes.NewBufferString(`{"url":"http://127.0.0.1:8080/index.html","timeout":"1s","output":"127.0.0.1:5000"}`),
@@ -192,10 +163,6 @@ func TestDownloadService_Download(t *testing.T) {
 			if !test.enable {
 				t.SkipNow()
 			}
-
-			test.sc.
-				On("CreateStreamer", test.creatorInput...).
-				Return(test.creatorOutputFunc()...)
 
 			err := NewDownloadService(test.df, test.sc).Download(test.in)
 			if (err != nil) != test.wantErr {

@@ -62,7 +62,7 @@ func TestNewStreamerCreator(t *testing.T) {
 			srv := httptest.NewServer(http.NewServeMux())
 			defer srv.Close()
 
-			s, err := newStreamer(test.address(srv.Listener.Addr().String()))
+			s, err := NewStreamer(test.address(srv.Listener.Addr().String()))
 			if (err != nil) != test.wantErr {
 				t.Error(err)
 				t.FailNow()

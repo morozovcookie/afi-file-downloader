@@ -3,13 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/morozovcookie/afifiledownloader/tcp"
 	"os"
 	"time"
 
 	afd "github.com/morozovcookie/afifiledownloader"
 	"github.com/morozovcookie/afifiledownloader/cli"
 	"github.com/morozovcookie/afifiledownloader/http"
-	"github.com/morozovcookie/afifiledownloader/tcp"
 )
 
 type Output struct {
@@ -22,13 +22,11 @@ type Output struct {
 }
 
 // Additional:
-// 1. Control redirects
-// 2. Tests
-// 5. Dockerfile (or werf.yaml)
-// 6. Code docs
-// 7. Project docs
-// 8. CI / code quality / github releases
-// 9. SSL
+// 1. Dockerfile (or werf.yaml)
+// 2. Control redirects
+// 3. SSL
+// 4. Code docs
+// 5. Project docs
 
 func main() {
 	var (
@@ -47,7 +45,15 @@ func main() {
 		}
 	}(&err)
 
-	svc := cli.NewDownloadService(createDownloadFunc(http.NewDownloader(), out), tcp.NewStreamerCreator())
+	var svc *cli.DownloadService
+	{
+		downloader := createDownloadFunc(http.NewDownloader(), out)
+		creator := func(address string) (s afd.Streamer, err error) {
+			return tcp.NewStreamer(address)
+		}
+
+		svc = cli.NewDownloadService(downloader, creator)
+	}
 
 	if err = svc.Download(os.Stdin); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "download error: %v \n", err)

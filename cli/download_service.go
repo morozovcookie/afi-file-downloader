@@ -39,7 +39,7 @@ func (svc *DownloadService) Download(r io.Reader) (err error) {
 			return nil
 		}
 
-		s, err := svc.sc.CreateStreamer(in.Output)
+		s, err := svc.sc(in.Output)
 		if err != nil {
 			return err
 		}

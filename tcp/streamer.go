@@ -9,7 +9,7 @@ type Streamer struct {
 	conn io.WriteCloser
 }
 
-func newStreamer(address string) (s *Streamer, err error) {
+func NewStreamer(address string) (s *Streamer, err error) {
 	s = &Streamer{}
 
 	if s.conn, err = net.Dial("tcp", address); err != nil {
