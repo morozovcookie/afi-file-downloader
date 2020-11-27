@@ -1,11 +1,12 @@
 package tcp
 
 import (
+	"io"
 	"net"
 )
 
 type Streamer struct {
-	conn net.Conn
+	conn io.WriteCloser
 }
 
 func newStreamer(address string) (s *Streamer, err error) {
