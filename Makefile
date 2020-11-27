@@ -6,6 +6,9 @@ GOOS        ?= linux
 GOARCH      ?= amd64
 GOFLAGS      = CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH)
 
+WERF_PATH   = $(shell multiwerf werf-path 1.1 rock-solid)
+WERF_CONFIG = $(CURRENT_DIR)/scripts/werf/werf.yaml
+
 # Download dependencies.
 .PHONY: gomod
 gomod:
@@ -55,3 +58,21 @@ go-build:
 clean:
 	@echo "+ $@"
 	@rm -rf $(CURRENT_DIR)/out
+
+# Build docker image using werf
+.PHONY: werf-build
+werf-build:
+	@echo "+ $@"
+	@$(WERF_PATH) build \
+		--config $(WERF_CONFIG) \
+		--stages-storage :local
+
+# Publish image
+.PHONY: werf-publish
+werf-publish:
+	@echo "+ $@"
+	@$(WERF_PATH) publish \
+		--config $(WERF_CONFIG) \
+		--stages-storage :local \
+		--images-repo $(DOCKER_REPO) \
+		--tag-by-stages-signature

@@ -22,11 +22,10 @@ type Output struct {
 }
 
 // Additional:
-// 1. Dockerfile (or werf.yaml)
-// 2. Control redirects
-// 3. SSL
-// 4. Code docs
-// 5. Project docs
+// 1. Control redirects
+// 2. SSL
+// 3. Code docs
+// 4. Project docs
 
 func main() {
 	var (
@@ -56,8 +55,6 @@ func main() {
 	}
 
 	if err = svc.Download(os.Stdin); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "download error: %v \n", err)
-
 		return
 	}
 
