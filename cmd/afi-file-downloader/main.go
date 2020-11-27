@@ -3,13 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/morozovcookie/afifiledownloader/tcp"
 	"os"
 	"time"
 
 	afd "github.com/morozovcookie/afifiledownloader"
 	"github.com/morozovcookie/afifiledownloader/cli"
 	"github.com/morozovcookie/afifiledownloader/http"
+	"github.com/morozovcookie/afifiledownloader/tcp"
 )
 
 type Output struct {
