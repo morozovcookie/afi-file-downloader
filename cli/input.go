@@ -41,12 +41,17 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	return ErrInvalidDuration
 }
 
+const (
+	DefaultMaxRedirects = 5
+)
+
 type Input struct {
-	IgnoreSSLCertificates bool     `json:"ignore-ssl-certificates"`
-	FollowRedirects       bool     `json:"follow-redirects"`
-	URL                   string   `json:"url"`
-	Output                string   `json:"output"`
-	Timeout               Duration `json:"timeout"`
+	IsIgnoreSSLCertificates bool     `json:"ignore-ssl-certificates"`
+	IsFollowRedirects       bool     `json:"follow-redirects"`
+	MaxRedirects            int      `json:"max-redirects"`
+	URL                     string   `json:"url"`
+	Output                  string   `json:"output"`
+	Timeout                 Duration `json:"timeout"`
 }
 
 var (

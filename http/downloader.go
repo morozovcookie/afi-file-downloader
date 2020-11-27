@@ -8,10 +8,18 @@ import (
 	afd "github.com/morozovcookie/afifiledownloader"
 )
 
-type Downloader struct{}
+type Downloader struct {
+	c *http.Client
+}
 
 func NewDownloader() *Downloader {
-	return &Downloader{}
+	return &Downloader{
+		c: &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		},
+	}
 }
 
 // nolint: bodyclose
@@ -33,7 +41,7 @@ func (d *Downloader) Download(
 		return 0, 0, "", err
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := d.c.Do(req)
 	if err != nil {
 		return 0, 0, "", err
 	}
