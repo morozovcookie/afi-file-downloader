@@ -22,6 +22,7 @@ func NewDownloadService(dc DownloaderCreator, sc StreamerCreator) *DownloadServi
 func (svc *DownloadService) Download(r io.Reader) (err error) {
 	in := &Input{
 		MaxRedirects: DefaultMaxRedirects,
+		Timeout:      DefaultTimeout,
 	}
 
 	if err = json.NewDecoder(r).Decode(in); err != nil {

@@ -21,11 +21,6 @@ type Output struct {
 	Redirects     []string `json:"redirects,omitempty"`
 }
 
-// Additional:
-// 1. Classic Dockerfile
-// 2. SSL
-// 3. Project docs
-
 func main() {
 	var (
 		out = &Output{Success: true}
