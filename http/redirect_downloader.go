@@ -21,8 +21,9 @@ type RedirectDownloader struct {
 	maxRedirects int64
 }
 
+// nolint: gosec
 func NewRedirectDownloader(maxRedirects int64, isIgnoreSSLCertificates bool) (downloader *RedirectDownloader) {
-	downloader =  &RedirectDownloader{
+	downloader = &RedirectDownloader{
 		c: &http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse

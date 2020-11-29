@@ -61,6 +61,7 @@ func downloaderCreator(out *Output) cli.DownloaderCreator {
 				downloader := http.NewRedirectDownloader(maxRedirects, isIgnoreSSLCertificates)
 				out.HTTPCode, out.ContentLength, out.ContentType, out.Redirects, err = downloader.Download(
 					url, timeout, c)
+
 				if err != nil {
 					return err
 				}
@@ -72,6 +73,7 @@ func downloaderCreator(out *Output) cli.DownloaderCreator {
 		return func(url string, timeout time.Duration, c afd.DownloadCallback) (err error) {
 			downloader := http.NewDownloader(isIgnoreSSLCertificates)
 			out.HTTPCode, out.ContentLength, out.ContentType, err = downloader.Download(url, timeout, c)
+
 			if err != nil {
 				return err
 			}

@@ -161,7 +161,7 @@ func TestRedirectDownloader_Download(t *testing.T) {
 			},
 		},
 		{
-			name: "create request error",
+			name:    "create request error",
 			enabled: true,
 
 			srvHandlerPattern: "/",
@@ -220,7 +220,7 @@ func TestRedirectDownloader_Download(t *testing.T) {
 			},
 		},
 		{
-			name: "send request error",
+			name:    "send request error",
 			enabled: true,
 
 			srvHandlerPattern: "/",
@@ -330,7 +330,7 @@ func TestRedirectDownloader_Download(t *testing.T) {
 			},
 		},
 		{
-			name: "callback error",
+			name:    "callback error",
 			enabled: true,
 
 			srvHandlerPattern: "/",

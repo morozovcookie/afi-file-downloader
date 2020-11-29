@@ -13,6 +13,7 @@ type Downloader struct {
 	c *http.Client
 }
 
+// nolint: gosec
 func NewDownloader(isIgnoreSSLCertificates bool) (downloader *Downloader) {
 	downloader = &Downloader{
 		c: &http.Client{
