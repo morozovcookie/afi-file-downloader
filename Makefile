@@ -6,8 +6,10 @@ GOOS        ?= linux
 GOARCH      ?= amd64
 GOFLAGS      = CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH)
 
-WERF_PATH   = $(shell multiwerf werf-path 1.1 rock-solid)
-WERF_CONFIG = $(CURRENT_DIR)/scripts/werf/werf.yaml
+WERF_PATH           = $(shell multiwerf werf-path 1.1 rock-solid)
+WERF_CONFIG         = $(CURRENT_DIR)/scripts/werf/werf.yaml
+WERF_STAGES_STORAGE = :local
+WERF_DOCKER_OPTIONS = "-i"
 
 # Download dependencies.
 .PHONY: gomod
@@ -53,6 +55,12 @@ go-build:
 		-o $(CURRENT_DIR)/out/afi-file-downloader \
 		$(CURRENT_DIR)/cmd/afi-file-downloader/main.go
 
+# Run binary
+.PHONY: go-run
+go-run:
+	@echo "+ $@"
+	@$(CURRENT_DIR)/out/afi-file-downloader
+
 # Clean out directory
 .PHONY: clean
 clean:
@@ -65,7 +73,16 @@ werf-build:
 	@echo "+ $@"
 	@$(WERF_PATH) build \
 		--config $(WERF_CONFIG) \
-		--stages-storage :local
+		--stages-storage $(WERF_STAGES_STORAGE)
+
+# Run image
+.PHONY: werf-run
+werf-run:
+	@echo "+ $@"
+	@$(WERF_PATH) run \
+		--config $(WERF_CONFIG) \
+		--stages-storage $(WERF_STAGES_STORAGE) \
+		--docker-options $(WERF_DOCKER_OPTIONS)
 
 # Publish image
 .PHONY: werf-publish
@@ -73,6 +90,6 @@ werf-publish:
 	@echo "+ $@"
 	@$(WERF_PATH) publish \
 		--config $(WERF_CONFIG) \
-		--stages-storage :local \
+		--stages-storage $(WERF_STAGES_STORAGE) \
 		--images-repo $(DOCKER_REPO) \
 		--tag-by-stages-signature
