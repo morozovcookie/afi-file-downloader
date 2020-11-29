@@ -2,38 +2,19 @@ package http
 
 import (
 	"context"
-	"crypto/tls"
-	"net/http"
 	"time"
 
 	afd "github.com/morozovcookie/afifiledownloader"
 )
 
 type Downloader struct {
-	c *http.Client
+	requester *Requester
 }
 
-// nolint: gosec
-func NewDownloader(isIgnoreSSLCertificates bool) (downloader *Downloader) {
-	downloader = &Downloader{
-		c: &http.Client{
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
-		},
+func NewDownloader(isIgnoreSSLCertificates bool) *Downloader {
+	return &Downloader{
+		requester: NewRequester(isIgnoreSSLCertificates),
 	}
-
-	if !isIgnoreSSLCertificates {
-		return downloader
-	}
-
-	downloader.c.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
-
-	return downloader
 }
 
 // nolint: bodyclose
@@ -50,19 +31,14 @@ func (d *Downloader) Download(
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(timeout))
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	resp, err := d.requester.MakeRequest(ctx, url)
 	if err != nil {
 		return 0, 0, "", err
 	}
 
-	res, err := d.c.Do(req)
-	if err != nil {
+	if err = c(resp); err != nil {
 		return 0, 0, "", err
 	}
 
-	if err = c(res); err != nil {
-		return 0, 0, "", err
-	}
-
-	return res.StatusCode, res.ContentLength, res.Header.Get("Content-Type"), nil
+	return resp.StatusCode, resp.ContentLength, resp.Header.Get("Content-Type"), nil
 }

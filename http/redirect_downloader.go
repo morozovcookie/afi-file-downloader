@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"net/http"
 	"time"
@@ -16,33 +15,17 @@ var (
 )
 
 type RedirectDownloader struct {
-	c *http.Client
+	requester *Requester
 
 	maxRedirects int64
 }
 
-// nolint: gosec
-func NewRedirectDownloader(maxRedirects int64, isIgnoreSSLCertificates bool) (downloader *RedirectDownloader) {
-	downloader = &RedirectDownloader{
-		c: &http.Client{
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
-		},
+func NewRedirectDownloader(maxRedirects int64, isIgnoreSSLCertificates bool) *RedirectDownloader {
+	return &RedirectDownloader{
+		requester: NewRequester(isIgnoreSSLCertificates),
+
 		maxRedirects: maxRedirects,
 	}
-
-	if !isIgnoreSSLCertificates {
-		return downloader
-	}
-
-	downloader.c.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
-
-	return downloader
 }
 
 // nolint: bodyclose
@@ -64,8 +47,7 @@ func (rd *RedirectDownloader) Download(
 
 		ctx, cancel = context.WithDeadline(context.Background(), time.Now().Add(timeout))
 
-		req *http.Request
-		res *http.Response
+		resp *http.Response
 	)
 
 	defer cancel()
@@ -79,19 +61,15 @@ func (rd *RedirectDownloader) Download(
 
 		path[reqURL] = struct{}{}
 
-		if req, err = http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil); err != nil {
+		if resp, err = rd.requester.MakeRequest(ctx, reqURL); err != nil {
 			return 0, 0, "", nil, err
 		}
 
-		if res, err = rd.c.Do(req); err != nil {
-			return 0, 0, "", nil, err
-		}
-
-		if isRedirectChainEnd(res.StatusCode) {
+		if isRedirectChainEnd(resp.StatusCode) {
 			break
 		}
 
-		u, _ := res.Location()
+		u, _ := resp.Location()
 		reqURL = u.String()
 
 		if _, ok := path[reqURL]; ok {
@@ -102,11 +80,11 @@ func (rd *RedirectDownloader) Download(
 		leftRedirects--
 	}
 
-	if err = c(res); err != nil {
+	if err = c(resp); err != nil {
 		return 0, 0, "", nil, err
 	}
 
-	return res.StatusCode, res.ContentLength, res.Header.Get("Content-Type"), redirects, nil
+	return resp.StatusCode, resp.ContentLength, resp.Header.Get("Content-Type"), redirects, nil
 }
 
 func isRedirectChainEnd(status int) bool {
