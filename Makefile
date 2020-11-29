@@ -1,15 +1,21 @@
 CURRENT_DIR = $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
-GOPATH       = $(shell go env GOPATH)
-CGO_ENABLED  = 0
-GOOS        ?= linux
-GOARCH      ?= amd64
-GOFLAGS      = CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH)
+GOPATH      = $(shell go env GOPATH)
+CGO_ENABLED = 0
+GOOS        = linux
+GOARCH      = amd64
+GOFLAGS     = CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH)
 
 WERF_PATH           = $(shell multiwerf werf-path 1.1 rock-solid)
 WERF_CONFIG         = $(CURRENT_DIR)/scripts/werf/werf.yaml
 WERF_STAGES_STORAGE = :local
 WERF_DOCKER_OPTIONS = "-i"
+
+DOCKER_FILE       = $(CURRENT_DIR)/scripts/docker/Dockerfile
+DOCKER_REPOSITORY = docker.io
+DOCKER_IMAGE      = afi-file-downloader
+DOCKER_TAG        = latest
+DOCKER_IMAGE_NAME = $(DOCKER_REPOSITORY)/$(DOCKER_IMAGE):$(DOCKER_TAG)
 
 # Download dependencies.
 .PHONY: gomod
@@ -75,7 +81,7 @@ werf-build:
 		--config $(WERF_CONFIG) \
 		--stages-storage $(WERF_STAGES_STORAGE)
 
-# Run image
+# Run docker image using werf
 .PHONY: werf-run
 werf-run:
 	@echo "+ $@"
@@ -84,7 +90,7 @@ werf-run:
 		--stages-storage $(WERF_STAGES_STORAGE) \
 		--docker-options $(WERF_DOCKER_OPTIONS)
 
-# Publish image
+# Publish docker image using werf
 .PHONY: werf-publish
 werf-publish:
 	@echo "+ $@"
@@ -93,3 +99,32 @@ werf-publish:
 		--stages-storage $(WERF_STAGES_STORAGE) \
 		--images-repo $(DOCKER_REPO) \
 		--tag-by-stages-signature
+
+# Build docker image
+.PHONY: docker-build
+docker-build:
+	@echo "+ $@"
+	@docker build \
+		--rm \
+		-t $(DOCKER_IMAGE):$(DOCKER_TAG) \
+		-f $(DOCKER_FILE) \
+		.
+	@docker tag $(DOCKER_IMAGE):$(DOCKER_TAG) $(DOCKER_IMAGE_NAME)
+
+# Run docker image
+.PHONY: docker-run
+docker-run:
+	@echo "+ $@"
+	@docker run \
+		--rm \
+		-i \
+		$(DOCKER_IMAGE_NAME) \
+		afi-file-downloader
+
+# Publish docker image
+.PHONY: docker-publish
+docker-publish:
+	@echo "+ $@"
+	@docker login
+	@docker push \
+		$(DOCKER_IMAGE_NAME)
