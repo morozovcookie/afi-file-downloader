@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"net/http"
 	"time"
@@ -20,8 +21,8 @@ type RedirectDownloader struct {
 	maxRedirects int64
 }
 
-func NewRedirectDownloader(maxRedirects int64) *RedirectDownloader {
-	return &RedirectDownloader{
+func NewRedirectDownloader(maxRedirects int64, isIgnoreSSLCertificates bool) (downloader *RedirectDownloader) {
+	downloader =  &RedirectDownloader{
 		c: &http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
@@ -29,6 +30,18 @@ func NewRedirectDownloader(maxRedirects int64) *RedirectDownloader {
 		},
 		maxRedirects: maxRedirects,
 	}
+
+	if !isIgnoreSSLCertificates {
+		return downloader
+	}
+
+	downloader.c.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+
+	return downloader
 }
 
 // nolint: bodyclose

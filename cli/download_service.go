@@ -53,7 +53,8 @@ func (svc *DownloadService) Download(r io.Reader) (err error) {
 		return nil
 	}
 
-	err = svc.dc(in.IsFollowRedirects, in.MaxRedirects)(in.URL, time.Duration(in.Timeout), callback)
+	err = svc.dc(in.IsFollowRedirects, in.MaxRedirects, in.IsIgnoreSSLCertificates)(
+		in.URL, time.Duration(in.Timeout), callback)
 	if err != nil {
 		return err
 	}

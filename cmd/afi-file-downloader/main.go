@@ -55,12 +55,12 @@ func main() {
 }
 
 func downloaderCreator(out *Output) cli.DownloaderCreator {
-	return func(isFollowRedirects bool, maxRedirects int64) afd.DownloadFunc {
+	return func(isFollowRedirects bool, maxRedirects int64, isIgnoreSSLCertificates bool) afd.DownloadFunc {
 		if isFollowRedirects {
 			return func(url string, timeout time.Duration, c afd.DownloadCallback) (err error) {
-				out.HTTPCode, out.ContentLength, out.ContentType, out.Redirects, err = http.
-					NewRedirectDownloader(maxRedirects).
-					Download(url, timeout, c)
+				downloader := http.NewRedirectDownloader(maxRedirects, isIgnoreSSLCertificates)
+				out.HTTPCode, out.ContentLength, out.ContentType, out.Redirects, err = downloader.Download(
+					url, timeout, c)
 				if err != nil {
 					return err
 				}
@@ -70,7 +70,8 @@ func downloaderCreator(out *Output) cli.DownloaderCreator {
 		}
 
 		return func(url string, timeout time.Duration, c afd.DownloadCallback) (err error) {
-			out.HTTPCode, out.ContentLength, out.ContentType, err = http.NewDownloader().Download(url, timeout, c)
+			downloader := http.NewDownloader(isIgnoreSSLCertificates)
+			out.HTTPCode, out.ContentLength, out.ContentType, err = downloader.Download(url, timeout, c)
 			if err != nil {
 				return err
 			}

@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 	"time"
 
@@ -12,14 +13,26 @@ type Downloader struct {
 	c *http.Client
 }
 
-func NewDownloader() *Downloader {
-	return &Downloader{
+func NewDownloader(isIgnoreSSLCertificates bool) (downloader *Downloader) {
+	downloader = &Downloader{
 		c: &http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
 			},
 		},
 	}
+
+	if !isIgnoreSSLCertificates {
+		return downloader
+	}
+
+	downloader.c.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+
+	return downloader
 }
 
 // nolint: bodyclose
