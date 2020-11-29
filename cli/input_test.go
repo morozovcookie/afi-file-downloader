@@ -191,6 +191,19 @@ func TestInput_Validate(t *testing.T) {
 			wantErr:  true,
 			expected: ErrInvalidOutput,
 		},
+		{
+			name:    "invalid max-redirects value",
+			enabled: true,
+
+			in: Input{
+				URL:          "http://127.0.0.1:8080/index.html",
+				Output:       "127.0.0.1:5000",
+				MaxRedirects: -2,
+			},
+
+			wantErr:  true,
+			expected: ErrInvalidMaxRedirectsValue,
+		},
 	}
 
 	for _, test := range tt {

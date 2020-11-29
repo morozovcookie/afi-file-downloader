@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"regexp"
 	"time"
 )
@@ -48,18 +49,24 @@ const (
 type Input struct {
 	IsIgnoreSSLCertificates bool     `json:"ignore-ssl-certificates"`
 	IsFollowRedirects       bool     `json:"follow-redirects"`
-	MaxRedirects            int      `json:"max-redirects"`
+	MaxRedirects            int64    `json:"max-redirects"`
 	URL                     string   `json:"url"`
 	Output                  string   `json:"output"`
 	Timeout                 Duration `json:"timeout"`
 }
 
 var (
-	ErrInvalidURL    = errors.New("invalid url address")
-	ErrInvalidOutput = errors.New("invalid output address")
+	ErrInvalidMaxRedirectsValue = errors.New("input validation error: max-redirects value should be between 0 " +
+		"and 9223372036854775806")
+	ErrInvalidURL    = errors.New("input validation error: invalid url address")
+	ErrInvalidOutput = errors.New("input validation error: invalid output address")
 )
 
 func (i Input) Validate() (err error) {
+	if i.MaxRedirects < 0 || i.MaxRedirects == math.MaxInt64-1 {
+		return ErrInvalidMaxRedirectsValue
+	}
+
 	if err = validateURL(i.URL); err != nil {
 		return err
 	}
