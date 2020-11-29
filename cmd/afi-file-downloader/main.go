@@ -22,10 +22,9 @@ type Output struct {
 }
 
 // Additional:
-// 1. Control redirects
+// 1. Classic Dockerfile
 // 2. SSL
-// 3. Code docs
-// 4. Project docs
+// 3. Project docs
 
 func main() {
 	var (
@@ -56,7 +55,7 @@ func main() {
 }
 
 func downloaderCreator(out *Output) cli.DownloaderCreator {
-	return func(isFollowRedirects bool, maxRedirects int) afd.DownloadFunc {
+	return func(isFollowRedirects bool, maxRedirects int64) afd.DownloadFunc {
 		if isFollowRedirects {
 			return func(url string, timeout time.Duration, c afd.DownloadCallback) (err error) {
 				out.HTTPCode, out.ContentLength, out.ContentType, out.Redirects, err = http.
