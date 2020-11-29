@@ -164,9 +164,10 @@ func TestDownloadService_Download(t *testing.T) {
 				t.SkipNow()
 			}
 
-			svc := NewDownloadService(func(isFollowRedirects bool, maxRedirects int64) afd.DownloadFunc {
+			creator := func(isFollowRedirects bool, maxRedirects int64, isIgnoreSSLCertificates bool) afd.DownloadFunc {
 				return test.df
-			}, test.sc)
+			}
+			svc := NewDownloadService(creator, test.sc)
 			err := svc.Download(test.in)
 			if (err != nil) != test.wantErr {
 				t.Error(err)
