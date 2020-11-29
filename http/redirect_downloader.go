@@ -12,10 +12,10 @@ import (
 type RedirectDownloader struct {
 	c *http.Client
 
-	maxRedirects int
+	maxRedirects int64
 }
 
-func NewRedirectDownloader(maxRedirects int) *RedirectDownloader {
+func NewRedirectDownloader(maxRedirects int64) *RedirectDownloader {
 	return &RedirectDownloader{
 		c: &http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -71,11 +71,7 @@ func (rd *RedirectDownloader) Download(
 			break
 		}
 
-		u, err := res.Location()
-		if err != nil {
-			return 0, 0, "", nil, err
-		}
-
+		u, _ := res.Location()
 		reqURL = u.String()
 
 		if _, ok := path[reqURL]; ok {
