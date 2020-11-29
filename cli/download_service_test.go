@@ -164,7 +164,10 @@ func TestDownloadService_Download(t *testing.T) {
 				t.SkipNow()
 			}
 
-			err := NewDownloadService(test.df, test.sc).Download(test.in)
+			svc := NewDownloadService(func(isFollowRedirects bool, maxRedirects int64) afd.DownloadFunc {
+				return test.df
+			}, test.sc)
+			err := svc.Download(test.in)
 			if (err != nil) != test.wantErr {
 				t.Error(err)
 				t.FailNow()
