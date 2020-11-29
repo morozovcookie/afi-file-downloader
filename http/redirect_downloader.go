@@ -9,6 +9,11 @@ import (
 	afd "github.com/morozovcookie/afifiledownloader"
 )
 
+var (
+	ErrToManyRedirects = errors.New("download error: too many redirects")
+	ErrCyclicRequests  = errors.New("download error: cyclic requests")
+)
+
 type RedirectDownloader struct {
 	c *http.Client
 
@@ -48,13 +53,14 @@ func (rd *RedirectDownloader) Download(
 		req *http.Request
 		res *http.Response
 	)
+
 	defer cancel()
 
 	redirects = make([]string, 0, rd.maxRedirects)
 
 	for {
 		if leftRedirects < 0 {
-			return 0, 0, "", nil, errors.New("too many redirects")
+			return 0, 0, "", nil, ErrToManyRedirects
 		}
 
 		path[reqURL] = struct{}{}
@@ -75,11 +81,10 @@ func (rd *RedirectDownloader) Download(
 		reqURL = u.String()
 
 		if _, ok := path[reqURL]; ok {
-			return 0, 0, "", nil, errors.New("cyclic requests")
+			return 0, 0, "", nil, ErrCyclicRequests
 		}
 
 		redirects = append(redirects, reqURL)
-
 		leftRedirects--
 	}
 
