@@ -161,7 +161,7 @@ func TestRedirectDownloader_Download(t *testing.T) {
 			},
 		},
 		{
-			name: "create request error",
+			name:    "create request error",
 			enabled: true,
 
 			srvHandlerPattern: "/",
@@ -220,7 +220,7 @@ func TestRedirectDownloader_Download(t *testing.T) {
 			},
 		},
 		{
-			name: "send request error",
+			name:    "send request error",
 			enabled: true,
 
 			srvHandlerPattern: "/",
@@ -330,7 +330,7 @@ func TestRedirectDownloader_Download(t *testing.T) {
 			},
 		},
 		{
-			name: "callback error",
+			name:    "callback error",
 			enabled: true,
 
 			srvHandlerPattern: "/",
@@ -401,7 +401,7 @@ func TestRedirectDownloader_Download(t *testing.T) {
 			srv := httptest.NewServer(mux)
 			defer srv.Close()
 
-			downloader := NewRedirectDownloader(test.redirects)
+			downloader := NewRedirectDownloader(test.redirects, false)
 			actualStatus, actualContentLength, actualContentType, actualRedirects, err := downloader.Download(
 				test.url(srv.URL), test.timeout, test.callback)
 			if (err != nil) != test.wantErr {

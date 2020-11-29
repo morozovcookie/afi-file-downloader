@@ -9,19 +9,21 @@ import (
 	afd "github.com/morozovcookie/afifiledownloader"
 )
 
+var (
+	ErrToManyRedirects = errors.New("download error: too many redirects")
+	ErrCyclicRequests  = errors.New("download error: cyclic requests")
+)
+
 type RedirectDownloader struct {
-	c *http.Client
+	requester *Requester
 
 	maxRedirects int64
 }
 
-func NewRedirectDownloader(maxRedirects int64) *RedirectDownloader {
+func NewRedirectDownloader(maxRedirects int64, isIgnoreSSLCertificates bool) *RedirectDownloader {
 	return &RedirectDownloader{
-		c: &http.Client{
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
-		},
+		requester: NewRequester(isIgnoreSSLCertificates),
+
 		maxRedirects: maxRedirects,
 	}
 }
@@ -45,49 +47,44 @@ func (rd *RedirectDownloader) Download(
 
 		ctx, cancel = context.WithDeadline(context.Background(), time.Now().Add(timeout))
 
-		req *http.Request
-		res *http.Response
+		resp *http.Response
 	)
+
 	defer cancel()
 
 	redirects = make([]string, 0, rd.maxRedirects)
 
 	for {
 		if leftRedirects < 0 {
-			return 0, 0, "", nil, errors.New("too many redirects")
+			return 0, 0, "", nil, ErrToManyRedirects
 		}
 
 		path[reqURL] = struct{}{}
 
-		if req, err = http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil); err != nil {
+		if resp, err = rd.requester.MakeRequest(ctx, reqURL); err != nil {
 			return 0, 0, "", nil, err
 		}
 
-		if res, err = rd.c.Do(req); err != nil {
-			return 0, 0, "", nil, err
-		}
-
-		if isRedirectChainEnd(res.StatusCode) {
+		if isRedirectChainEnd(resp.StatusCode) {
 			break
 		}
 
-		u, _ := res.Location()
+		u, _ := resp.Location()
 		reqURL = u.String()
 
 		if _, ok := path[reqURL]; ok {
-			return 0, 0, "", nil, errors.New("cyclic requests")
+			return 0, 0, "", nil, ErrCyclicRequests
 		}
 
 		redirects = append(redirects, reqURL)
-
 		leftRedirects--
 	}
 
-	if err = c(res); err != nil {
+	if err = c(resp); err != nil {
 		return 0, 0, "", nil, err
 	}
 
-	return res.StatusCode, res.ContentLength, res.Header.Get("Content-Type"), redirects, nil
+	return resp.StatusCode, resp.ContentLength, resp.Header.Get("Content-Type"), redirects, nil
 }
 
 func isRedirectChainEnd(status int) bool {

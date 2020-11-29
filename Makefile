@@ -6,16 +6,16 @@ GOOS        = linux
 GOARCH      = amd64
 GOFLAGS     = CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH)
 
-WERF_PATH           = $(shell multiwerf werf-path 1.1 rock-solid)
-WERF_CONFIG         = $(CURRENT_DIR)/scripts/werf/werf.yaml
-WERF_STAGES_STORAGE = :local
-WERF_DOCKER_OPTIONS = "-i"
-
 DOCKER_FILE       = $(CURRENT_DIR)/scripts/docker/Dockerfile
 DOCKER_REPOSITORY = docker.io
 DOCKER_IMAGE      = afi-file-downloader
 DOCKER_TAG        = latest
 DOCKER_IMAGE_NAME = $(DOCKER_REPOSITORY)/$(DOCKER_IMAGE):$(DOCKER_TAG)
+
+WERF_PATH           = $(shell multiwerf werf-path 1.1 rock-solid)
+WERF_CONFIG         = $(CURRENT_DIR)/scripts/werf/werf.yaml
+WERF_STAGES_STORAGE = :local
+WERF_DOCKER_OPTIONS = "-i"
 
 # Download dependencies.
 .PHONY: gomod
@@ -97,7 +97,7 @@ werf-publish:
 	@$(WERF_PATH) publish \
 		--config $(WERF_CONFIG) \
 		--stages-storage $(WERF_STAGES_STORAGE) \
-		--images-repo $(DOCKER_REPO) \
+		--images-repo $(DOCKER_REPOSITORY) \
 		--tag-by-stages-signature
 
 # Build docker image

@@ -157,7 +157,8 @@ func TestDownloader_Download(t *testing.T) {
 			srv := httptest.NewServer(mux)
 			defer srv.Close()
 
-			actualStatus, actualContentLength, actualContentType, err := NewDownloader().Download(
+			downloader := NewDownloader(false)
+			actualStatus, actualContentLength, actualContentType, err := downloader.Download(
 				test.url(srv.URL), test.timeout, test.callback)
 			if (err != nil) != test.wantErr {
 				t.Error(err)
