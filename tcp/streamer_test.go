@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"errors"
+	afd "github.com/morozovcookie/afifiledownloader"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,7 +18,7 @@ func TestNewStreamerCreator(t *testing.T) {
 
 		address func(string) string
 
-		afterCreate func(t *testing.T, s *Streamer)
+		afterCreate func(t *testing.T, s afd.Streamer)
 
 		wantErr bool
 	}{
@@ -29,7 +30,7 @@ func TestNewStreamerCreator(t *testing.T) {
 				return srv
 			},
 
-			afterCreate: func(t *testing.T, s *Streamer) {
+			afterCreate: func(t *testing.T, s afd.Streamer) {
 				assert.NotNil(t, s)
 
 				if err := s.Close(); err != nil {
@@ -45,7 +46,7 @@ func TestNewStreamerCreator(t *testing.T) {
 				return "256.256.256.256"
 			},
 
-			afterCreate: func(t *testing.T, s *Streamer) {
+			afterCreate: func(t *testing.T, s afd.Streamer) {
 				assert.Nil(t, s)
 			},
 
