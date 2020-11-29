@@ -44,6 +44,7 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 
 const (
 	DefaultMaxRedirects = 5
+	DefaultTimeout      = Duration(time.Second)
 )
 
 type Input struct {
