@@ -72,25 +72,25 @@ Communication between user and application based on JSON format message which pa
 
 ## Request
 
-|Field|Type|Description|Mandatory|Default|
-|-----|:---:|-----------|:-------:|:-----:|
-|ignore-ssl-certificates|Boolean|Allow insecure connection|[]|False|
-|follow-redirects|Boolean|Follow redirects|[]|False|
-|max-redirects|Long|Limit redirects|[]|5|
-|url|String|HTTP URL for downloading|[X]|Default|
-|output|String|TCP *host:port* for streaming downloaded data|[]|Default|
-|timeout|String|Request timeout|[]|1s|
+|Field                  |Type     |Description                                  |Mandatory|Default|
+|-----------------------|:-------:|---------------------------------------------|:-------:|:-----:|
+|ignore-ssl-certificates|*Boolean*|Allow insecure connection                    |N        |False  |
+|follow-redirects       |*Boolean*|Follow redirects                             |N        |False  |
+|max-redirects          |*Long*   |Limit redirects                              |N        |5      |
+|url                    |*String* |HTTP URL for downloading                     |Y        |       |
+|output                 |*String* |TCP *host:port* for streaming downloaded data|N        |       |
+|timeout                |*String* |Request timeout                              |N        |1s     |
 
 ## Response
 
-|Field|Type|Description|
-|-----|:---:|-----------|
-|success|Boolean|Request result|
-|http-code|Number|HTTP response status code|
-|content-length|Long|HTTP response content length|
-|content-type|String|HTTP response content type|
-|error-message|String|Error message|
-|redirects|List<String>|List of redirects|
+|Field           |Type          |Description                 |
+|----------------|:------------:|----------------------------|
+|success         |*Boolean*     |Request result              |
+|http-code       |*Number*      |HTTP response status code   |
+|content-length  |*Long*        |HTTP response content length|
+|content-type    |*String*      |HTTP response content type  |
+|error-message   |*String*      |Error message               |
+|redirects       |*List<String>*|List of redirects           |
 
 
 # Usage
