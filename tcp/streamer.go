@@ -3,14 +3,20 @@ package tcp
 import (
 	"io"
 	"net"
+
+	afd "github.com/morozovcookie/afifiledownloader"
 )
 
 type Streamer struct {
 	conn io.WriteCloser
 }
 
-func NewStreamer(address string) (s *Streamer, err error) {
-	s = &Streamer{}
+func NewStreamer(address string) (afd.Streamer, error) {
+	var (
+		s = &Streamer{}
+
+		err error
+	)
 
 	if s.conn, err = net.Dial("tcp", address); err != nil {
 		return nil, err

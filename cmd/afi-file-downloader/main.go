@@ -22,10 +22,9 @@ type Output struct {
 }
 
 // Additional:
-// 1. Control redirects
+// 1. Classic Dockerfile
 // 2. SSL
-// 3. Code docs
-// 4. Project docs
+// 3. Project docs
 
 func main() {
 	var (
@@ -44,15 +43,7 @@ func main() {
 		}
 	}(&err)
 
-	var svc *cli.DownloadService
-	{
-		downloader := createDownloadFunc(http.NewDownloader(), out)
-		creator := func(address string) (s afd.Streamer, err error) {
-			return tcp.NewStreamer(address)
-		}
-
-		svc = cli.NewDownloadService(downloader, creator)
-	}
+	svc := cli.NewDownloadService(downloaderCreator(out), tcp.NewStreamer)
 
 	if err = svc.Download(os.Stdin); err != nil {
 		return
@@ -63,12 +54,28 @@ func main() {
 	}
 }
 
-func createDownloadFunc(d *http.Downloader, out *Output) afd.DownloadFunc {
-	return func(url string, timeout time.Duration, c afd.DownloadCallback) (err error) {
-		if out.HTTPCode, out.ContentLength, out.ContentType, err = d.Download(url, timeout, c); err != nil {
-			return err
+func downloaderCreator(out *Output) cli.DownloaderCreator {
+	return func(isFollowRedirects bool, maxRedirects int64) afd.DownloadFunc {
+		if isFollowRedirects {
+			return func(url string, timeout time.Duration, c afd.DownloadCallback) (err error) {
+				out.HTTPCode, out.ContentLength, out.ContentType, out.Redirects, err = http.
+					NewRedirectDownloader(maxRedirects).
+					Download(url, timeout, c)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			}
 		}
 
-		return nil
+		return func(url string, timeout time.Duration, c afd.DownloadCallback) (err error) {
+			out.HTTPCode, out.ContentLength, out.ContentType, err = http.NewDownloader().Download(url, timeout, c)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
 	}
 }

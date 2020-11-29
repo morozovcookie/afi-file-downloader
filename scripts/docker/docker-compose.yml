@@ -2,6 +2,8 @@ version: '3'
 networks:
   nginx:
     external: false
+  redirect-nginx:
+    external: false
 services:
   nginx:
     image: nginx@sha256:a411d06ab4f5347ac9652357ac35600555aeff0b910326cc7adc36d471e0b36f
@@ -11,3 +13,21 @@ services:
     - 8080:80
     networks:
     - nginx
+  redirect-nginx-1:
+    image: nginx@sha256:a411d06ab4f5347ac9652357ac35600555aeff0b910326cc7adc36d471e0b36f
+    expose:
+    - 80
+    ports:
+    - 8081:80
+    networks:
+    - redirect-nginx
+    volumes:
+    - ./redirect-1.nginx.conf:/etc/nginx/conf.d/default.conf
+  redirect-nginx-2:
+    image: nginx@sha256:a411d06ab4f5347ac9652357ac35600555aeff0b910326cc7adc36d471e0b36f
+    expose:
+    - 80
+    ports:
+    - 8082:80
+    networks:
+    - redirect-nginx

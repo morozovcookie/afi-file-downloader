@@ -5,24 +5,24 @@ import (
 	"io"
 	"net/http"
 	"time"
-
-	afd "github.com/morozovcookie/afifiledownloader"
 )
 
 type DownloadService struct {
-	df afd.DownloadFunc
+	dc DownloaderCreator
 	sc StreamerCreator
 }
 
-func NewDownloadService(df afd.DownloadFunc, sc StreamerCreator) *DownloadService {
+func NewDownloadService(dc DownloaderCreator, sc StreamerCreator) *DownloadService {
 	return &DownloadService{
-		df: df,
+		dc: dc,
 		sc: sc,
 	}
 }
 
 func (svc *DownloadService) Download(r io.Reader) (err error) {
-	in := &Input{}
+	in := &Input{
+		MaxRedirects: DefaultMaxRedirects,
+	}
 
 	if err = json.NewDecoder(r).Decode(in); err != nil {
 		return err
@@ -53,7 +53,8 @@ func (svc *DownloadService) Download(r io.Reader) (err error) {
 		return nil
 	}
 
-	if err = svc.df(in.URL, time.Duration(in.Timeout), callback); err != nil {
+	err = svc.dc(in.IsFollowRedirects, in.MaxRedirects)(in.URL, time.Duration(in.Timeout), callback)
+	if err != nil {
 		return err
 	}
 
