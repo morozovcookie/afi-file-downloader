@@ -16,6 +16,9 @@ func TestDownloader_Download(t *testing.T) {
 		name    string
 		enabled bool
 
+		srvHandlerPattern string
+		srvHandler        func(w http.ResponseWriter, r *http.Request)
+
 		url      func(string) string
 		timeout  time.Duration
 		callback afd.DownloadCallback
@@ -29,6 +32,15 @@ func TestDownloader_Download(t *testing.T) {
 		{
 			name:    "pass",
 			enabled: true,
+
+			srvHandlerPattern: "/",
+			srvHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add("Content-Type", "application/json")
+
+				if _, err := w.Write([]byte(`{}`)); err != nil {
+					t.Error(err)
+				}
+			},
 
 			url: func(srv string) string {
 				return srv + "/index.html"
@@ -46,6 +58,15 @@ func TestDownloader_Download(t *testing.T) {
 			name:    "create request error",
 			enabled: true,
 
+			srvHandlerPattern: "/",
+			srvHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add("Content-Type", "application/json")
+
+				if _, err := w.Write([]byte(`{}`)); err != nil {
+					t.Error(err)
+				}
+			},
+
 			url: func(_ string) string {
 				return "ffs^*&^*(U://"
 			},
@@ -59,6 +80,15 @@ func TestDownloader_Download(t *testing.T) {
 		{
 			name:    "execute request error",
 			enabled: true,
+
+			srvHandlerPattern: "/",
+			srvHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add("Content-Type", "application/json")
+
+				if _, err := w.Write([]byte(`{}`)); err != nil {
+					t.Error(err)
+				}
+			},
 
 			url: func(_ string) string {
 				return ""
@@ -74,6 +104,15 @@ func TestDownloader_Download(t *testing.T) {
 			name:    "execute callback error",
 			enabled: true,
 
+			srvHandlerPattern: "/",
+			srvHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add("Content-Type", "application/json")
+
+				if _, err := w.Write([]byte(`{}`)); err != nil {
+					t.Error(err)
+				}
+			},
+
 			url: func(srv string) string {
 				return srv + "/index.html"
 			},
@@ -84,6 +123,26 @@ func TestDownloader_Download(t *testing.T) {
 
 			wantErr: true,
 		},
+		{
+			name:    "redirect",
+			enabled: true,
+
+			srvHandlerPattern: "/",
+			srvHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add("Location", r.URL.String())
+				w.WriteHeader(http.StatusMovedPermanently)
+			},
+
+			url: func(srv string) string {
+				return srv + "/index.html"
+			},
+			timeout: time.Second,
+			callback: func(r *http.Response) (err error) {
+				return nil
+			},
+
+			expectedStatus: http.StatusMovedPermanently,
+		},
 	}
 
 	for _, test := range tt {
@@ -93,13 +152,7 @@ func TestDownloader_Download(t *testing.T) {
 			}
 
 			mux := http.NewServeMux()
-			mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-				w.Header().Add("Content-Type", "application/json")
-
-				if _, err := w.Write([]byte(`{}`)); err != nil {
-					t.Error(err)
-				}
-			})
+			mux.HandleFunc(test.srvHandlerPattern, test.srvHandler)
 
 			srv := httptest.NewServer(mux)
 			defer srv.Close()
