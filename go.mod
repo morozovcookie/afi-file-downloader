@@ -1,5 +1,3 @@
-module github.com/morozovcookie/afifiledownloader
+module github.com/morozovcookie/afi-file-downloader
 
 go 1.15
-
-require github.com/stretchr/testify v1.6.1
