@@ -24,7 +24,6 @@ const (
 	DefaultMaxRedirects = 5
 	DefaultTimeout      = Duration(time.Second)
 
-	MethodUnknown = "UNKNOWN"
 	MethodGet     = "GET"
 	MethodHead    = "HEAD"
 	DefaultMethod = MethodGet

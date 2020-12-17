@@ -5,6 +5,7 @@ type ClientFactoryMethodKey struct {
 	redirect bool
 }
 
+// nolint: gochecknoglobals
 var (
 	TLSClientKey = ClientFactoryMethodKey{
 		insecure: false,

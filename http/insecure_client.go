@@ -6,12 +6,13 @@ import (
 )
 
 type InsecureClient struct {
-	client *http.Client
+	requester *Requester
 }
 
+// nolint: gosec
 func NewInsecureClient() Client {
 	return &InsecureClient{
-		client: &http.Client{
+		requester: NewRequester(&http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
 					InsecureSkipVerify: true,
@@ -20,19 +21,17 @@ func NewInsecureClient() Client {
 			CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
 				return http.ErrUseLastResponse
 			},
-		},
+		}),
 	}
 }
 
 func (c *InsecureClient) SetRedirects(_ int64) {}
 
 func (c *InsecureClient) Do(req *http.Request, callback func(resp *Response) error) error {
-	resp, err := c.client.Do(req)
+	resp, err := c.requester.MakeRequest(req)
 	if err != nil {
 		return err
 	}
 
-	return callback(&Response{
-		Response: resp,
-	})
+	return callback(resp)
 }
