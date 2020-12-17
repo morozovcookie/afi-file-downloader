@@ -5,13 +5,28 @@ import (
 	"io"
 )
 
-type FileStat map[string]string
+//----------------------------------------------------------------------------------------------------------------------
 
-// FileService represent a 2nd edition of service for file operating.
-type FileService interface {
-	// FindFile download file by specified path.
-	FindFile(ctx context.Context, name string, dst io.ReaderFrom) error		// <-- http implementation
+// FindFileFunc represent a function which implement file downloading by specified path.
+type FindFileFunc func(ctx context.Context, name string, dst io.Writer) error
 
-	// GetFileStat return file statistics by specified path.
-	GetFileStat(ctx context.Context, name string) (*FileStat, error)		// <-- http implementation
-}
+//----------------------------------------------------------------------------------------------------------------------
+
+// FilePropertyKey is a file attribute name.
+type FilePropertyKey string
+
+// FilePropertyValue is a file attribute value.
+type FilePropertyValue string
+
+// FileStat is a file attributes container.
+type FileStat map[FilePropertyKey]FilePropertyValue
+
+// GetFileStatFunc represent a function which implement file statistics retrieving by specified path.
+type GetFileStatFunc func(ctx context.Context, name string) (FileStat, error)
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// StreamFileFunc represent a function which implement file streaming from source to destination.
+type StreamFileFunc func(ctx context.Context, src io.Reader, dst io.Writer) error
+
+//----------------------------------------------------------------------------------------------------------------------
