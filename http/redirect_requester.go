@@ -22,7 +22,7 @@ func (r *RedirectRequester) MakeRequest(req *http.Request, redirects int64) (*Re
 		url  = req.URL.String()
 
 		resp = &Response{
-			Redirects: make([]string, 0, redirects),
+			redirects: make([]string, 0, redirects),
 		}
 
 		err error
@@ -55,7 +55,7 @@ func (r *RedirectRequester) MakeRequest(req *http.Request, redirects int64) (*Re
 			return nil, ErrCyclicRequests
 		}
 
-		resp.Redirects = append(resp.Redirects, url)
+		resp.redirects = append(resp.redirects, url)
 
 		left--
 	}

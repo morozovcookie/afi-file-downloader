@@ -3,6 +3,8 @@ package http
 import (
 	"crypto/tls"
 	"net/http"
+
+	afifiledownloader "github.com/morozovcookie/afi-file-downloader"
 )
 
 type InsecureRedirectClient struct {
@@ -30,7 +32,7 @@ func (c *InsecureRedirectClient) SetRedirects(redirects int64) {
 	c.redirects = redirects
 }
 
-func (c *InsecureRedirectClient) Do(req *http.Request, callback func(resp *Response) error) error {
+func (c *InsecureRedirectClient) Do(req *http.Request, callback afifiledownloader.CallbackFunc) error {
 	resp, err := c.requester.MakeRequest(req, c.redirects)
 	if err != nil {
 		return err

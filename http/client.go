@@ -2,9 +2,15 @@ package http
 
 import (
 	"net/http"
+
+	afifiledownloader "github.com/morozovcookie/afi-file-downloader"
 )
 
+//
 type Client interface {
+	//
 	SetRedirects(redirects int64)
-	Do(req *http.Request, callback func(resp *Response) error) error
+
+	//
+	Do(req *http.Request, callback afifiledownloader.CallbackFunc) error
 }

@@ -2,6 +2,8 @@ package http
 
 import (
 	"net/http"
+
+	afifiledownloader "github.com/morozovcookie/afi-file-downloader"
 )
 
 type TLSRedirectClient struct {
@@ -23,7 +25,7 @@ func (c *TLSRedirectClient) SetRedirects(redirects int64) {
 	c.redirects = redirects
 }
 
-func (c *TLSRedirectClient) Do(req *http.Request, callback func(resp *Response) error) error {
+func (c *TLSRedirectClient) Do(req *http.Request, callback afifiledownloader.CallbackFunc) error {
 	resp, err := c.requester.MakeRequest(req, c.redirects)
 	if err != nil {
 		return err
